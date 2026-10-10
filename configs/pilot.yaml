@@ -1,4 +1,5 @@
-# Shared settings for every arm. Arms differ only in the data they see, not in these values.
+# Shared settings for every arm. Arms differ only in the training target (B vs C), never in these values.
+# Reasons for each value: docs/training_plan_brief.md, Section 5.
 model_id: Qwen/Qwen3-VL-2B-Instruct
 seed: 0
 
@@ -7,21 +8,32 @@ data:
   frames_dir: data/frames
   splits_dir: data/splits
   clip_seconds: 5
-  num_frames: 8
-  max_pixels: 200704          # 448 * 448
-  train_limit: 1000           # pilot size; raise to 5000 for the real run
+  num_frames: 10              # 2 fps over a 5 s clip
+  frame_size: 448             # square frames; a multiple of 32 so Qwen's resizer leaves it unchanged
+  split_ratios: [0.70, 0.15, 0.15]   # train / val / test, by share of questions, split by video
+  train_size: 5000            # same for every arm
+  max_per_video: 80           # cap on training questions from any one video (60 left only 4,295; 80 gives 5,317)
+  max_per_video_eval: 100     # cap for val/test, so one long video can't dominate the score
+  val_size: 500               # fixed validation subset scored during training
 
 lora:
-  r: 16
-  alpha: 32
+  r: 16                       # adapter rank
+  alpha: 32                   # scaling; effective LoRA scale = alpha / r = 2
   dropout: 0.05
+  # Regex: only the language model's attention and MLP projections; the vision encoder stays frozen.
   target_modules: '.*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)'
 
 train:
   lr: 1.0e-4
-  grad_accum: 8
-  max_epochs: 10              # ceiling; keep the best validation checkpoint
-  patience: 2                 # epochs without validation improvement before stopping
+  weight_decay: 0.0
+  warmup_ratio: 0.03          # first 3% of optimizer steps ramp the learning rate up from 0
+  grad_accum: 16              # effective batch = 1 x 16
+  max_grad_norm: 1.0          # gradient clipping, guards against rare huge updates
+  max_epochs: 3
+  evals_per_epoch: 2          # validate every half epoch
+  patience_evals: 2           # stop after this many validations without improvement
+  eval_at_start: true         # score the untrained model on val first (gives the curve a starting point)
+  num_workers: 4              # CPU processes preparing the next examples while the GPU trains
   output_dir: runs
 
 memtest:

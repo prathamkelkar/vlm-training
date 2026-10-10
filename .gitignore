@@ -3,6 +3,7 @@ __pycache__/
 data/raw/*
 data/frames/*
 data/splits/*
+docs/*
 runs/*
 *.pdf
 *.csv
