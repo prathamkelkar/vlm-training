@@ -1,0 +1,8 @@
+# torch and torchvision come from the system install (2.14 + CUDA 13.0); create the venv with --system-site-packages
+transformers>=4.57
+peft
+accelerate
+qwen-vl-utils==0.0.14
+pillow
+pyyaml
+tqdm

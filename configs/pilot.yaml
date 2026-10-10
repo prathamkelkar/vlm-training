@@ -1,0 +1,28 @@
+# Shared settings for every arm. Arms differ only in the data they see, not in these values.
+model_id: Qwen/Qwen3-VL-2B-Instruct
+seed: 0
+
+data:
+  raw_dir: data/raw/egoextra
+  frames_dir: data/frames
+  splits_dir: data/splits
+  clip_seconds: 5
+  num_frames: 8
+  max_pixels: 200704          # 448 * 448
+  train_limit: 1000           # pilot size; raise to 5000 for the real run
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: '.*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)'
+
+train:
+  lr: 1.0e-4
+  grad_accum: 8
+  max_epochs: 10              # ceiling; keep the best validation checkpoint
+  patience: 2                 # epochs without validation improvement before stopping
+  output_dir: runs
+
+memtest:
+  steps: 20
