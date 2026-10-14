@@ -1,0 +1,42 @@
+data:
+  clip_seconds: 5
+  exclude_clips:
+  - 03_043_49
+  - '03_043_51'
+  - '03_043_53'
+  - '03_043_55'
+  - 04_039_85
+  frame_size: 448
+  frames_dir: data/frames
+  max_per_video: 80
+  max_per_video_eval: 100
+  num_frames: 10
+  raw_dir: data/raw/egoextra
+  split_ratios:
+  - 0.7
+  - 0.15
+  - 0.15
+  splits_dir: data/splits
+  train_size: 5000
+  val_size: 500
+lora:
+  alpha: 32
+  dropout: 0.05
+  r: 16
+  target_modules: .*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)
+memtest:
+  steps: 20
+model_id: Qwen/Qwen3-VL-2B-Instruct
+seed: 0
+train:
+  eval_at_start: true
+  evals_per_epoch: 2
+  grad_accum: 16
+  lr: 0.0001
+  max_epochs: 3
+  max_grad_norm: 1.0
+  num_workers: 0
+  output_dir: runs
+  patience_evals: 2
+  warmup_ratio: 0.03
+  weight_decay: 0.0

@@ -87,7 +87,7 @@ def print_report(name, res):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/pilot.yaml")
-    ap.add_argument("--split", default="test", choices=["val", "test"])
+    ap.add_argument("--split", default="test", choices=["train", "val", "test"])
     ap.add_argument("--adapter", default=None, help="path to a saved LoRA adapter (omit for zero-shot)")
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--blind", action="store_true", help="no video: question and options only")

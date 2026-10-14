@@ -1,0 +1,9 @@
+{
+ "run": "arm_c_seed0",
+ "arm": "C",
+ "context": false,
+ "seed": 0,
+ "best_val_acc": 0.6954,
+ "optimizer_steps": 780,
+ "best_adapter": "runs/arm_c_seed0/best"
+}

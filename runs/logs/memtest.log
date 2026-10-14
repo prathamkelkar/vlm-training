@@ -1,0 +1,16 @@
+Loading weights:   0%|          | 0/625 [00:00<?, ?it/s]Loading weights:   9%|▉         | 55/625 [00:00<00:01, 542.65it/s]Loading weights:  19%|█▉        | 120/625 [00:00<00:00, 600.77it/s]Loading weights:  30%|███       | 190/625 [00:00<00:00, 644.10it/s]Loading weights:  41%|████      | 257/625 [00:00<00:00, 647.61it/s]Loading weights:  59%|█████▊    | 367/625 [00:00<00:00, 808.85it/s]Loading weights:  84%|████████▍ | 526/625 [00:00<00:00, 1070.27it/s]Loading weights: 100%|██████████| 625/625 [00:00<00:00, 910.88it/s] 
+trainable params: 17,432,576 || all params: 2,144,964,608 || trainable%: 0.8127
+after loading model: 4.33 GB allocated of 8.08 GB
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+step  1: loss 7.359  seq_len 1116  2.16s  peak 4.82 GB
+step  2: loss 0.095  seq_len 1122  0.86s  peak 4.96 GB
+step  3: loss 4.275  seq_len 1114  1.19s  peak 4.96 GB
+step  4: loss 3.772  seq_len 1123  0.87s  peak 4.96 GB
+step  5: loss 3.869  seq_len 1116  0.86s  peak 4.96 GB
+step  6: loss 4.970  seq_len 1110  0.86s  peak 4.96 GB
+
+=== memory test result ===
+peak allocated 4.96 GB, peak reserved 5.21 GB, card 8.08 GB
+median 0.87 s per training example (GPU only; data loading overlaps in real training)
+estimated epoch of 5000 examples: 72 min (+ validation of 500 questions, roughly a third of a step each)
+VERDICT: fits, with 2.9 GB headroom.

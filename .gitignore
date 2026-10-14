@@ -1,10 +1,7 @@
-.venv/
-__pycache__/
-data/raw/*
-data/frames/*
-data/splits/*
-docs/*
-runs/*
-*.pdf
-*.csv
-!**/.gitkeep
+# Track ONLY the training runs (runs/), including the trained adapter weights.
+# Every other untracked file is ignored.
+# (Ignore rules never affect files git already tracks; see scripts/commit_runs.sh for how to commit only runs/.)
+
+/*
+!/.gitignore
+!/runs/

@@ -209,10 +209,13 @@ def extract_frames(clip, out_dir, num_frames, size):
     `select` filter grab exactly those frames in one pass.
     """
     out_dir = Path(out_dir)
-    info = json.loads(subprocess.run(
+    streams = json.loads(subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
          "-show_entries", "stream=nb_read_packets,r_frame_rate", "-of", "json", str(clip)],
-        capture_output=True, text=True, check=True).stdout)["streams"][0]
+        capture_output=True, text=True, check=True).stdout).get("streams", [])
+    if not streams:  # empty or corrupt file: say which one, instead of a bare IndexError
+        raise ValueError(f"{clip} has no video stream; add its clip id to data.exclude_clips in the config")
+    info = streams[0]
     total = int(info["nb_read_packets"])  # number of frames in the clip (packets = frames for H.264 video)
     num, den = map(int, info["r_frame_rate"].split("/"))
     duration = total / (num / den)  # e.g. 75 frames / 15 fps = 5.0 s
@@ -281,13 +284,13 @@ def main():
     d, seed = cfg["data"], cfg["seed"]
     out = Path(d["splits_dir"])
 
-    # The test set is frozen once created: regenerating it could silently change every reported number.
+    # The test set is frozen once its frames are attached: regenerating it could silently change every
+    # reported number. Splits without frames aren't frozen yet (same seed -> same split anyway).
     if (out / "test.jsonl").exists() and not args.force:
         old = read_jsonl(out / "test.jsonl")
-        if any(not r.get("frames") for r in old) and not args.skip_frames:
-            print("existing splits have no frames yet; regenerating them with frames (same seed -> same split)")
-        else:
+        if all(r.get("frames") for r in old):
             raise SystemExit(f"{out}/test.jsonl exists and is frozen. Use --force only if you mean to change it.")
+        print("existing splits have no frames yet, so they aren't frozen; regenerating (same seed -> same split)")
 
     questions = load_questions(d["raw_dir"])
     protocols = load_protocols(d["raw_dir"])
@@ -309,6 +312,15 @@ def main():
     val = rng.sample(val, min(d["val_size"], len(val)))
     test = cap_per_video(full["test"], d["max_per_video_eval"], rng)
     splits = {"train": train, "val": val, "test": test}
+
+    # Drop questions whose clip is broken in the released dataset (listed in the config). Done after sampling,
+    # so no other question changes split, and before balancing, so A-E stay exactly even.
+    bad = set(d.get("exclude_clips") or [])
+    for name in SPLITS:
+        dropped = sum(r["clip_id"] in bad for r in splits[name])
+        splits[name] = [r for r in splits[name] if r["clip_id"] not in bad]
+        if dropped:
+            print(f"{name}: dropped {dropped} questions with broken clips")
 
     for name in SPLITS:  # separate seeded RNG per split, so changing train_size can't alter the test set
         balance_answer_positions(splits[name], random.Random(f"{seed}-options-{name}"))

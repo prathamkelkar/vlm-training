@@ -15,6 +15,9 @@ data:
   max_per_video: 80           # cap on training questions from any one video (60 left only 4,295; 80 gives 5,317)
   max_per_video_eval: 100     # cap for val/test, so one long video can't dominate the score
   val_size: 500               # fixed validation subset scored during training
+  # Clips that are empty (262-byte files with no video) in Ego-EXTRA's own release; CRC matched, so not our download.
+  # Their questions (1 val, 8 test) are dropped before answer letters are balanced.
+  exclude_clips: ["03_043_49", "03_043_51", "03_043_53", "03_043_55", "04_039_85"]   # quoted: unquoted 03_043_49 is a NUMBER in YAML
 
 lora:
   r: 16                       # adapter rank
@@ -33,7 +36,7 @@ train:
   evals_per_epoch: 2          # validate every half epoch
   patience_evals: 2           # stop after this many validations without improvement
   eval_at_start: true         # score the untrained model on val first (gives the curve a starting point)
-  num_workers: 4              # CPU processes preparing the next examples while the GPU trains
+  num_workers: 0              # measured: background workers slowed training (1.83 vs 1.14 s per example)
   output_dir: runs
 
 memtest:

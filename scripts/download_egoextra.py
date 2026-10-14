@@ -115,10 +115,17 @@ def fetch_entry(info, out_dir):
     if dest.exists() and dest.stat().st_size == info.file_size:
         return 0  # already downloaded
     # Every entry starts with a 30-byte "local file header"; its name/extra lengths tell us where the data starts.
-    header = http_get(CLIPS_URL, info.header_offset, info.header_offset + 29)
-    _, _, _, _, _, _, _, _, _, name_len, extra_len = struct.unpack("<4s5H3L2H", header)
-    data_start = info.header_offset + 30 + name_len + extra_len
-    raw = http_get(CLIPS_URL, data_start, data_start + info.compress_size - 1) if info.compress_size else b""
+    # The server takes ~1 s to answer ANY request, so we fetch header + data in ONE request, with some slack
+    # for the header's variable-length part (usually well under 1 KB), instead of two round trips.
+    slack = 30 + len(info.filename.encode()) + 1024
+    blob = http_get(CLIPS_URL, info.header_offset, info.header_offset + slack + info.compress_size - 1)
+    _, _, _, _, _, _, _, _, _, name_len, extra_len = struct.unpack("<4s5H3L2H", blob[:30])
+    start = 30 + name_len + extra_len  # where the file's bytes begin inside `blob`
+    if start + info.compress_size <= len(blob):
+        raw = blob[start:start + info.compress_size]
+    else:  # rare: header longer than our slack, so fall back to a second request
+        data_start = info.header_offset + start
+        raw = http_get(CLIPS_URL, data_start, data_start + info.compress_size - 1)
     if info.compress_type == zipfile.ZIP_STORED:
         data = raw
     elif info.compress_type == zipfile.ZIP_DEFLATED:
@@ -180,7 +187,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="download at most N clips (for testing)")
     ap.add_argument("--only-used", metavar="SPLITS_DIR", nargs="?", const="data/splits", default=None,
                     help="download only clips referenced by the split files (about 3.6 GB instead of 6.6 GB)")
-    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--workers", type=int, default=24, help="parallel requests; the server is slow to respond, not slow to send")
     args = ap.parse_args()
 
     out_dir = Path(args.out)
